@@ -1,0 +1,127 @@
+---
+title: "Kastl Blog Posts"
+output: html_notebook
+---
+
+Bar Chart:
+
+```{r}
+library(tidyverse)
+
+opp_stats <- read_csv("ncaaopponent25.csv") |> 
+  filter(Conference == "Big Ten") |>
+  mutate(Errors_Per_Set = `Opp Errors` / S)
+
+ggplot() +
+  geom_bar(data = opp_stats, aes(x = reorder(Team, Errors_Per_Set), weight = Errors_Per_Set), fill = "grey") +
+  geom_bar(data = opp_stats |> filter(Team == "Nebraska"), aes(x = Team, weight = Errors_Per_Set), fill = "#E41C38") +
+  coord_flip() +
+  theme_minimal() + 
+
+  labs(
+    title = "Opponent Performance at the Devaney Center",
+    subtitle = "Nebraska leads the Big Ten in forcing opponent errors per set, proving the 'Devaney Effect' is real.",
+    x = "Big Ten Team",
+    y = "Opponent Errors Per Set",
+    caption = "Source: NCAA Statistics | By Susie Kastl"
+  ) +
+  theme(
+    plot.title.position = "plot",
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 9)
+  )
+```
+
+Bump Chart:
+
+```{r}
+library(tidyverse)
+
+rankings <- data.frame(
+  Season = c(2022, 2023, 2024, 2025,
+             2022, 2023, 2024, 2025,
+             2022, 2023, 2024, 2025,
+             2022, 2023, 2024, 2025,
+             2022, 2023, 2024, 2025),
+  Team = c("Nebraska", "Nebraska", "Nebraska", "Nebraska",
+           "Wisconsin", "Wisconsin", "Wisconsin", "Wisconsin",
+           "Minnesota", "Minnesota", "Minnesota", "Minnesota",
+           "Penn State", "Penn State", "Penn State", "Penn State",
+           "Purdue", "Purdue", "Purdue", "Purdue"),
+  Rank = c(1, 1, 1, 1, 
+           2, 2, 2, 2, 
+           3, 3, 3, 3, 
+           6, 6, 8, 4, 
+           8, 8, 4, 5) 
+)
+ggplot() + 
+  geom_line(data=rankings, aes(x=Season, y=Rank, color=Team), size = 1.5) + 
+  geom_point(data=rankings, aes(x=Season, y=Rank, color=Team), size = 4) + 
+  geom_text(data = rankings |> filter(Season == min(Season)), 
+            aes(x = Season - .1, y=Rank, label = Team), size = 3, hjust = 1) +
+  geom_text(data = rankings |> filter(Season == max(Season)), 
+            aes(x = Season + .1, y=Rank, label = Team), size = 3, hjust = 0) +
+  scale_color_manual(values = c(
+    "#7A0019",
+    "#E41C38",
+    "#001E44",
+    "#CEB888",
+    "#B70101"
+  )) +
+  scale_x_continuous(breaks=c(2022, 2023, 2024, 2025), limits = c(2021, 2026)) + 
+  scale_y_reverse(breaks=c(1, 2, 3, 4, 5, 6, 7, 8)) +
+  labs(
+    title = "Nebraska’s Unshakable Home-Court Dominance",
+    subtitle = "Nebraska's home-court ranking has stayed at the top for four straight seasons",
+    y = "Big Ten Rank",
+    x = "Season",
+    caption = "Source: NCAA Statistics | By Susie Kastl"
+  ) +
+ theme_minimal() +
+ theme(
+    legend.position = "none",
+    panel.grid.major = element_blank(),
+    plot.title.position = "plot",
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 9)
+  )
+```
+
+Scatterplot:
+
+```{r}
+library(tidyverse)
+library(ggrepel)
+
+attendance <- read_csv("ncaaattendance25.csv") |> select(-Rank)
+opponent_hitting <- read_csv("ncaaopponent25.csv") |> 
+  select(-Rank) |> 
+  rename(Institution = Team)
+devaney <- attendance |> inner_join(opponent_hitting)
+
+ggplot() + 
+  geom_point(data=devaney, aes(x=`Avg Attendance`, y=`Opp Errors`), color="grey", alpha=.5) +
+  geom_smooth(data=devaney, aes(x=`Avg Attendance`, y=`Opp Errors`), method="lm", se=FALSE, color="black") +
+  geom_point(data=devaney |> filter(Institution == "Nebraska"), 
+             aes(x=`Avg Attendance`, y=`Opp Errors`), color="#E41C38", size=4) +
+  geom_text_repel(data=devaney |> filter(Institution == "Nebraska"), 
+                  aes(x=`Avg Attendance`, y=`Opp Errors`, label=Institution)) +
+  
+  labs(
+    title="Does the Crowd Cause Chaos?", 
+    subtitle="The relationship between home-court attendance and opponent hitting mistakes.", 
+    x="Average Attendance", 
+    y="Opponent Errors",
+    caption="Source: NCAA Statistics | By Susie Kastl"
+  ) +
+  theme_minimal() +
+theme(
+    panel.grid.minor = element_blank(),
+    plot.title.position = "plot",
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 10),
+    axis.title = element_text(size = 9)
+  )
+```
